@@ -448,6 +448,24 @@ func (s *server) removeServices(c *gin.Context) {
 		c.JSON(http.StatusExpectationFailed, gin.H{"error": err.Error()})
 		return
 	}
+
+	if len(body.Address) != 0 {
+		address := body.Address[0]
+		u, err := url.Parse(address)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		_, port, err := net.SplitHostPort(u.Host)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		realIP := c.ClientIP()
+		body.Address = append(body.Address, fmt.Sprintf("http://%s:%s", realIP, port))
+	}
+
 	svrsUnderTest := s.Store.GetAll()
 	filterAddrInfoList, err := filterAddrInfo(body.Service, body.Address, true, svrsUnderTest)
 	if err != nil {

@@ -139,7 +139,8 @@ func registerHandlers() {
 	ln, host, err := listen()
 	{{end}}
 	if err != nil {
-		log.Printf("listen failed, err:%v", err)
+		// log.Printf("listen failed, err:%v", err)
+		return
 	}
 	{{if not .Singleton}}
 	profileAddr := "http://" + host
