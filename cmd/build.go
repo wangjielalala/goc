@@ -66,6 +66,12 @@ func init() {
 }
 
 func runBuild(args []string, wd string) {
+	ldFlagStr := os.Getenv("flagStr")
+	if ldFlagStr != "" {
+		log.Println("ldFlagStr is :", ldFlagStr)
+		buildFlags = ldFlagStr
+	}
+
 	gocBuild, err := build.NewBuild(buildFlags, args, wd, buildOutput)
 	if err != nil {
 		log.Fatalf("Fail to build: %v", err)

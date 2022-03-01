@@ -139,12 +139,14 @@ func registerHandlers() {
 	ln, host, err := listen()
 	{{end}}
 	if err != nil {
-		log.Fatalf("listen failed, err:%v", err)
+		log.Printf("listen failed, err:%v", err)
 	}
 	{{if not .Singleton}}
 	profileAddr := "http://" + host
 	if resp, err := registerSelf(profileAddr); err != nil {
-		log.Fatalf("register address %v failed, err: %v, response: %v", profileAddr, err, string(resp))
+		defer ln.Close()
+		log.Printf("register address %v failed, err: %v, response: %v", profileAddr, err, string(resp))
+		return
 	}
 
 	fn := func() {
@@ -306,14 +308,14 @@ func registerHandlers() {
 		fmt.Fprintln(w, "clear call successfully")
 	})
 
-	log.Fatal(http.Serve(ln, mux))
+	log.Println(http.Serve(ln, mux))
 }
 
 func registerSelf(address string) ([]byte, error) {
 	selfName := filepath.Base(os.Args[0])
     serviceName := {{.Service | printf "%q"}}
     if serviceName != "" {
-        selfName = serviceName
+        selfName += "/" + serviceName
     }
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/cover/register?name=%s&address=%s", {{.Center | printf "%q"}}, selfName, address), nil)
 	if err != nil {

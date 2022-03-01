@@ -341,6 +341,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -354,12 +355,14 @@ import (
 func HtmlOutput(profile io.Reader) (string, error) {
 	profiles, err := ParseProfilesFromReader(profile)
 	if err != nil {
+		fmt.Println("ParseProfilesFromReader:", err.Error())
 		return "", err
 	}
 	var d templateData
 
 	dirs, err := findPkgs(profiles)
 	if err != nil {
+		fmt.Println("findPkgs:", err.Error())
 		return "", err
 	}
 
@@ -370,9 +373,10 @@ func HtmlOutput(profile io.Reader) (string, error) {
 		}
 		file, err := findFile(dirs, fn)
 		if err != nil {
+			fmt.Println("findFile:", err.Error())
 			return "", err
 		}
-		src, err := os.ReadFile(file)
+		src, err := ioutil.ReadFile(file)
 		if err != nil {
 			return "", fmt.Errorf("can't read %q: %v", fn, err)
 		}
@@ -422,7 +426,7 @@ func HtmlOutputOnBrower(profile io.Reader, outfile string) error {
 		if err != nil {
 			return err
 		}
-		src, err := os.ReadFile(file)
+		src, err := ioutil.ReadFile(file)
 		if err != nil {
 			return fmt.Errorf("can't read %q: %v", fn, err)
 		}
@@ -441,7 +445,7 @@ func HtmlOutputOnBrower(profile io.Reader, outfile string) error {
 	var out *os.File
 	if outfile == "" {
 		var dir string
-		dir, err = os.MkdirTemp("", "cover")
+		dir, err = ioutil.TempDir("", "cover")
 		if err != nil {
 			return err
 		}
@@ -515,10 +519,16 @@ func findPkgs(profiles []*Profile) (map[string]*Pkg, error) {
 		return pkgs, nil
 	}
 
+    for name, pkg := range pkgs {
+		fmt.Println(name)
+		fmt.Println(pkg)
+	}
+
 	// Note: usually run as "go tool cover" in which case $GOROOT is set,
 	// in which case runtime.GOROOT() does exactly what we want.
 	goTool := filepath.Join(runtime.GOROOT(), "bin/go")
 	cmd := exec.Command(goTool, append([]string{"list", "-e", "-json"}, list...)...)
+	fmt.Println(cmd.Args)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	stdout, err := cmd.Output()
@@ -758,6 +768,7 @@ type FuncVisitor struct {
 func FuncOutput(profile io.Reader) (float64, error) {
 	profiles, err := ParseProfilesFromReader(profile)
 	if err != nil {
+		fmt.Println("ParseProfilesFromReader err is :",err.Error())
 		return 0, err
 	}
 
@@ -766,15 +777,20 @@ func FuncOutput(profile io.Reader) (float64, error) {
 	tabber := tabwriter.NewWriter(out, 1, 8, 1, '\t', 0)
 	defer tabber.Flush()
 
+	fmt.Println("FuncOutput")
+
 	var total, covered int64
 	for _, profile := range profiles {
 		fn := profile.FileName
+		fmt.Println("findFile1")	
 		file, err := findFile1(fn)
 		if err != nil {
+			fmt.Println("findFile1 err is :",err.Error())
 			return 0, err
 		}
 		funcs, err := findFuncs(file)
 		if err != nil {
+			fmt.Println("findFuncs err is :",err.Error())
 			return 0, err
 		}
 		// Now match up functions and profile blocks.
@@ -873,10 +889,12 @@ func FuncOutput1(profile io.Reader, profileCover *ProfileCover) error {
 		fn := profile.FileName
 		file, err := findFile1(fn)
 		if err != nil {
+			fmt.Println("findFile1 err is :",err.Error())
 			return err
 		}
 		funcs, err := findFuncs(file)
 		if err != nil {
+			fmt.Println("findFuncs err is :",err.Error())
 			return err
 		}
 		profileFile.Name = fn
