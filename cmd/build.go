@@ -39,6 +39,9 @@ goc build .
 # Build the current binary with cover variables injected, and set the registry center to http://127.0.0.1:7777.
 goc build --center=http://127.0.0.1:7777 
 
+# Build the current binary with cover variables injected, and set the registry name.
+goc build --service=srv1
+
 # Build the current binary with cover variables injected, and redirect output to /to/this/path.
 goc build --output /to/this/path
 
@@ -63,6 +66,12 @@ func init() {
 }
 
 func runBuild(args []string, wd string) {
+	ldFlagStr := os.Getenv("flagStr")
+	if ldFlagStr != "" {
+		log.Println("ldFlagStr is :", ldFlagStr)
+		buildFlags = ldFlagStr
+	}
+
 	gocBuild, err := build.NewBuild(buildFlags, args, wd, buildOutput)
 	if err != nil {
 		log.Fatalf("Fail to build: %v", err)
@@ -77,6 +86,7 @@ func runBuild(args []string, wd string) {
 		Target:                   gocBuild.TmpDir,
 		Mode:                     coverMode.String(),
 		AgentPort:                agentPort.String(),
+		Service:                  service,
 		Center:                   center,
 		Singleton:                singleton,
 		IsMod:                    gocBuild.IsMod,

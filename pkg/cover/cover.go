@@ -52,11 +52,13 @@ type TestCover struct {
 	Mode                     string
 	AgentPort                string
 	Center                   string // cover profile host center
+	Service                  string
 	Singleton                bool
 	MainPkgCover             *PackageCover
 	DepsCover                []*PackageCover
 	CacheCover               map[string]*PackageCover
 	GlobalCoverVarImportPath string
+	CoverHtmlPath            string
 }
 
 // PackageCover holds all the generate coverage variables of a package
@@ -139,6 +141,7 @@ type CoverInfo struct {
 	Args                     string
 	Mode                     string
 	AgentPort                string
+	Service                  string
 	Center                   string
 	Singleton                bool
 }
@@ -190,9 +193,11 @@ func Execute(coverInfo *CoverInfo) error {
 				Mode:                     mode,
 				AgentPort:                agentPort,
 				Center:                   center,
+				Service:                  coverInfo.Service,
 				Singleton:                singleton,
 				MainPkgCover:             mainCover,
 				GlobalCoverVarImportPath: globalCoverVarImportPath,
+				CoverHtmlPath:            globalCoverVarImportPath + "/goc_utils",
 			}
 
 			// handle its dependency
@@ -217,6 +222,13 @@ func Execute(coverInfo *CoverInfo) error {
 			var httpCoverApis = fmt.Sprintf("%s/http_cover_apis_auto_generated.go", pkg.Dir)
 			if err := InjectCountersHandlers(tc, httpCoverApis); err != nil {
 				log.Errorf("failed to inject counters for package: %s, err: %v", pkg.ImportPath, err)
+				return ErrCoverPkgFailed
+			}
+
+			// inject goc html/func utils
+			err = initCoverHtmlFuncGocUtils(filepath.Join(coverInfo.Target, coverInfo.GlobalCoverVarImportPath))
+			if err != nil {
+				log.Errorf("failed to inject html/func utils for package: %s, err: %v", pkg.ImportPath, err)
 				return ErrCoverPkgFailed
 			}
 		}
