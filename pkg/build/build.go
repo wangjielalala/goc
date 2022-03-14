@@ -70,10 +70,10 @@ func NewBuild(buildflags string, args []string, workingDir string, outputDir str
 		Packages:   strings.Join(args, " "),
 		WorkingDir: workingDir,
 	}
-	if false == b.validatePackageForBuild() {
-		log.Errorln(ErrWrongPackageTypeForBuild)
-		return nil, ErrWrongPackageTypeForBuild
-	}
+	//if false == b.validatePackageForBuild() {
+	//	log.Errorln(ErrWrongPackageTypeForBuild)
+	//	return nil, ErrWrongPackageTypeForBuild
+	//}
 	if err := b.MvProjectsToTmp(); err != nil {
 		return nil, err
 	}
